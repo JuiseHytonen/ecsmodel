@@ -3,7 +3,7 @@ using Unity.Mathematics;
 
 namespace Components
 {
-    public class Position : IComponentData
+    public struct Position : IComponentData
     {
         public float3 Value;
 

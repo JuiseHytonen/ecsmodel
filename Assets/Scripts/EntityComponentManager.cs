@@ -1,6 +1,8 @@
 ﻿using System;
 using Components;
+using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DefaultNamespace
@@ -14,23 +16,29 @@ namespace DefaultNamespace
             Instance = this;
         }
 
-        private EntityManager EntityManager => World.DefaultGameObjectInjectionWorld.EntityManager;
+        // Exposed as public to enable making queries and modifying entities and components
+        public EntityManager EntityManager => World.DefaultGameObjectInjectionWorld.EntityManager;
         
         private void Update()
         {
-            var entity = CreateEntity();
-            AddComponent(entity);
+            // All these are just examples of how entities API:s could be called from outside
+            var entity = CreateEmptyEntity();
+            var positionComponent = new Position() { Value = new float3(2.3f, 4.3f, 3.3f) };
+            AddComponent(entity, positionComponent);
+            var query = EntityManager.CreateEntityQuery(typeof(Position));
+            print($"Num of position components {query.ToEntityArray(Allocator.TempJob).Length}");
         }
 
-        public Entity CreateEntity()
+        public Entity CreateEmptyEntity()
         {
-            var components = new ComponentType[] { typeof(Position) };
+            var components = new ComponentType[] { };
             return EntityManager.CreateEntity(components);
         }
 
-        public void AddComponent(Entity entity)
+        public void AddComponent<T>(Entity entity, T component) where T : unmanaged, IComponentData
         {
-            EntityManager.AddComponent<Position>(entity);
+            EntityManager.AddComponentData(entity, component);
+            // invoke a delegate here to enable reactive style
         }
     }
 }

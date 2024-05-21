@@ -10,10 +10,14 @@ namespace DefaultNamespace
     public class EntityComponentManager : MonoBehaviour
     {
         public static EntityComponentManager Instance;
+        public EntityComponentListener Listener;
+
+        public event Action<Entity, IComponentData> ComponentAdded;
 
         private void Awake()
         {
             Instance = this;
+            Listener = new EntityComponentListener();
         }
 
         // Exposed as public to enable making queries and modifying entities and components
@@ -38,7 +42,7 @@ namespace DefaultNamespace
         public void AddComponent<T>(Entity entity, T component) where T : unmanaged, IComponentData
         {
             EntityManager.AddComponentData(entity, component);
-            // invoke a delegate here to enable reactive style
+            ComponentAdded?.Invoke(entity, component);
         }
     }
 }

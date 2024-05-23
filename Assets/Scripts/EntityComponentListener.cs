@@ -8,7 +8,7 @@ namespace DefaultNamespace
 {
     public class EntityComponentListener
     {
-        private Dictionary<Type, Delegate> _componentAddedListeners = new();
+        private Dictionary<Type, Action<Entity, IComponentData>> _componentAddedListeners = new();
         
         public EntityComponentListener()
         {
@@ -22,24 +22,26 @@ namespace DefaultNamespace
             {
                 if (kvp.Key == componentData.GetType())
                 {
-                    kvp.Value.DynamicInvoke(entity, componentData);
+                    kvp.Value(entity, componentData);
                 }
             }
         }
         
-        public void AddComponentAddedListener<T>(Action<Entity, T> callback)
+        public void AddComponentAddedListener<T>(Action<Entity, IComponentData> callback)
         {
             _componentAddedListeners.Add(typeof(T), callback);
         }
         
-        public void OnPositionChanged<T>(Entity entity, T component)
+        private void OnPositionAdded(Entity arg1, IComponentData arg2)
         {
-            Debug.Log("position component added");
+            var position = (Position)arg2;
+            Debug.Log("position added " + position.Y);
         }
         
         private void TestAPI()
         {
-            AddComponentAddedListener<Position>(OnPositionChanged);
+            AddComponentAddedListener<Position>(OnPositionAdded);
         }
+
     }
 }

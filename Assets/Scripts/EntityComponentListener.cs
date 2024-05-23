@@ -2,25 +2,23 @@
 using System.Collections.Generic;
 using Components;
 using Unity.Entities;
+using UnityEngine;
 
 namespace DefaultNamespace
 {
     public class EntityComponentListener
     {
-        private Dictionary<Type, Delegate> _listeners = new();
+        private Dictionary<Type, Delegate> _componentAddedListeners = new();
+        
         public EntityComponentListener()
         {
             EntityComponentManager.Instance.ComponentAdded += OnComponentAdded;
-        }
-
-        public void AddListener<T>(Func<T> callback)
-        {
-            _listeners.Add(typeof(T), callback);
+            TestAPI();
         }
         
         private void OnComponentAdded(Entity entity, IComponentData componentData)
         {
-            foreach (var kvp in _listeners)
+            foreach (var kvp in _componentAddedListeners)
             {
                 if (kvp.Key == componentData.GetType())
                 {
@@ -28,15 +26,20 @@ namespace DefaultNamespace
                 }
             }
         }
-
+        
+        public void AddComponentAddedListener<T>(Action<Entity, T> callback)
+        {
+            _componentAddedListeners.Add(typeof(T), callback);
+        }
+        
+        public void OnPositionChanged<T>(Entity entity, T component)
+        {
+            Debug.Log("position component added");
+        }
+        
         private void TestAPI()
         {
-            AddListener<Position>(OnPositionChanged);
-
-            Position OnPositionChanged<T>(Entity entity, T component)
-            {
-                
-            }
+            AddComponentAddedListener<Position>(OnPositionChanged);
         }
     }
 }

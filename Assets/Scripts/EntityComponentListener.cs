@@ -8,7 +8,7 @@ namespace DefaultNamespace
 {
     public class EntityComponentListener
     {
-        private Dictionary<Type, Action<Entity, IComponentData>> _componentAddedListeners = new();
+        static private Dictionary<Type, ComponentListener<IComponentData>> _componentAddedListeners = new();
         
         public EntityComponentListener()
         {
@@ -27,21 +27,38 @@ namespace DefaultNamespace
             }
         }
         
-        public void AddComponentAddedListener<T>(Action<Entity, IComponentData> callback)
+        public void AddComponentAddedListener<T>(IComponentListener<IComponentData> componentListener) where T : IComponentData
         {
-            _componentAddedListeners.Add(typeof(T), callback);
-        }
-        
-        private void OnPositionAdded(Entity arg1, IComponentData arg2)
-        {
-            var position = (Position)arg2;
-            Debug.Log("position added " + position.Y);
+            _componentAddedListeners.Add(typeof(T), componentListener);
         }
         
         private void TestAPI()
         {
-            AddComponentAddedListener<Position>(OnPositionAdded);
+            var componentListener = new ComponentListener<Position>();
+            AddComponentAddedListener<Position>(componentListener);
+            componentListener.TypedComponentAdded += OnPositionAdded;
+        }
+        
+        private void OnPositionAdded(Entity arg1, Position arg2)
+        {
+            var position = (Position)arg2;
+            Debug.Log("position added " + position.Y);
         }
 
+        public interface IComponentListener<in T> where T : IComponentData
+        {
+            event Action<Entity, T> TypedComponentAdded;
+
+            public void InvokeEvent(Entity entity, T component);
+        }
+        
+        public class ComponentListener<T> : IComponentListener<T> where T : IComponentData
+        {
+            public event Action<Entity, T> TypedComponentAdded;
+            public void InvokeEvent(Entity entity, T component)
+            {
+                TypedComponentAdded?.Invoke(entity, component);
+            }
+        }
     }
 }

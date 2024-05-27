@@ -8,7 +8,7 @@ namespace DefaultNamespace
 {
     public class EntityComponentListener
     {
-        static private Dictionary<Type, ComponentListener<IComponentData>> _componentAddedListeners = new();
+        private Dictionary<Type, Action<Entity, IComponentData>> _componentAddedListeners = new();
         
         public EntityComponentListener()
         {
@@ -27,38 +27,23 @@ namespace DefaultNamespace
             }
         }
         
-        public void AddComponentAddedListener<T>(IComponentListener<IComponentData> componentListener) where T : IComponentData
+        public void AddComponentAddedListener<T>(Action<Entity, T> callback) where T : IComponentData
         {
-            _componentAddedListeners.Add(typeof(T), componentListener);
-        }
-        
-        private void TestAPI()
-        {
-            var componentListener = new ComponentListener<Position>();
-            AddComponentAddedListener<Position>(componentListener);
-            componentListener.TypedComponentAdded += OnPositionAdded;
+            _componentAddedListeners.Add(
+                typeof(T),
+                (entity, componentData) => callback(entity, (T)componentData));
         }
         
         private void OnPositionAdded(Entity arg1, Position arg2)
         {
-            var position = (Position)arg2;
+            var position = arg2;
             Debug.Log("position added " + position.Y);
         }
-
-        public interface IComponentListener<in T> where T : IComponentData
-        {
-            event Action<Entity, T> TypedComponentAdded;
-
-            public void InvokeEvent(Entity entity, T component);
-        }
         
-        public class ComponentListener<T> : IComponentListener<T> where T : IComponentData
+        private void TestAPI()
         {
-            public event Action<Entity, T> TypedComponentAdded;
-            public void InvokeEvent(Entity entity, T component)
-            {
-                TypedComponentAdded?.Invoke(entity, component);
-            }
+            AddComponentAddedListener<Position>(OnPositionAdded);
         }
+
     }
 }
